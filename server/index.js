@@ -1,44 +1,41 @@
-const express = require('express')
-const compression = require('compression')
-const { renderPage } = require('vite-plugin-ssr')
+/**
+ * Birdnest server bootstrap.
+ */
 
-const isProduction = process.env.NODE_ENV === 'production'
-const root = `${__dirname}/..`
+require('dotenv-extended').load()
 
-startServer()
+const logger = require('./logger')
+const server = require('./birdnest-server')
 
-async function startServer() {
-  const app = express()
 
-  app.use(compression())
+function exitHandler(code, reason) {
+  const exit = () => {
+    logger.on('finish', () => {
+      process.exit(code)
+    })
 
-  if (isProduction) {
-    const sirv = require('sirv')
-    app.use(sirv(`${root}/dist/client`))
-  } else {
-    const vite = require('vite')
-    const viteDevMiddleware = (
-      await vite.createServer({
-        root,
-        server: { middlewareMode: true }
-      })
-    ).middlewares
-    app.use(viteDevMiddleware)
+    logger.end()
   }
 
-  app.get('*', async (req, res, next) => {
-    const pageContextInit = {
-      urlOriginal: req.originalUrl
+  return (err, promise) => {
+    logger.debug(`Exiting due to ${reason} (code: ${code})`)
+    if (err && err instanceof Error) {
+      logger.error(err.stack)
+      logger.error(promise)
+      console.log(err.stack)
+      console.log(promise)
     }
-    const pageContext = await renderPage(pageContextInit)
-    const { httpResponse } = pageContext
-    if (!httpResponse) return next()
-    const { body, statusCode, contentType, earlyHints } = httpResponse
-    if (res.writeEarlyHints) res.writeEarlyHints({ link: earlyHints.map((e) => e.earlyHintLink) })
-    res.status(statusCode).type(contentType).send(body)
-  })
 
-  const port = process.env.PORT || 3000
-  app.listen(port)
-  console.log(`Server running at http://localhost:${port}`)
+    server.stop(exit)
+    setTimeout(exit, 500).unref()
+
+  }
 }
+
+process.on('uncaughtException', exitHandler(1, 'Unexpected Error'))
+process.on('unhandledRejection', exitHandler(1, 'Unhandled Promise'))
+process.on('SIGTERM', exitHandler(0, 'SIGTERM'))
+process.on('SIGINT', exitHandler(0, 'SIGINT'))
+
+server.start()
+
