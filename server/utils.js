@@ -91,4 +91,4 @@ function sleep(ms, keepAlive = false) {
   })
 }
 
-module.exports = { distanceToNest, createDroneDataset, omit, sleep }
+module.exports = { distanceToNest, createDroneDataset, omit, pick, sleep }
