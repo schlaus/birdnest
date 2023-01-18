@@ -281,7 +281,7 @@
 </template>
 
 <script setup>
-import { inject, computed, reactive, ref, onMounted } from 'vue'
+import { inject, computed, reactive, ref } from 'vue'
 import stc from 'string-to-color'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
