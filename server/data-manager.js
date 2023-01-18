@@ -182,7 +182,7 @@ class DataManager extends EventEmitter {
           logger.debug(`Did not save pilot information for drone ${serialNumber} as drone was not found in storage`)
         }
       } else {
-        logger.info(`Fetching pilot information for drone ${serialNumber} failed`)
+        logger.debug(`Fetching pilot information for drone ${serialNumber} failed`)
       }
     })
   }
