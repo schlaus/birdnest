@@ -53,7 +53,7 @@ function createDroneDataset(drone, timestamp) {
 /**
  * Clone an object except for specified properties.
  * @param {Object} o - The object to copy.
- * @param  {...any} props - Properties to omit.
+ * @param {...any} props - Properties to omit.
  * @returns {Object}
  */
 function omit(o, ...props) {
@@ -62,6 +62,19 @@ function omit(o, ...props) {
     delete c[prop]
   }
   return c
+}
+
+/**
+ * Clone an object with only specified properties.
+ * @param {Object} o - The object to copy.
+ * @param {...any} props - Properties to pick.
+ * @returns {Object}
+ */
+function pick(o, ...props) {
+  return Object.fromEntries(
+    props.filter(prop => prop in o)
+      .map(prop => [prop, o[prop]])
+  )
 }
 
 /**
