@@ -59,7 +59,7 @@ exports.withExpBackoff = function withExpBackoff(fn, {
       fails = 0
       successes += 1
       if (decreaseThreshold && successes >= decreaseThreshold && currentDelay > initialDelay) {
-        currentDelay = Math.max(initialDelay, currentDelay / decreaseFactor)
+        currentDelay = Math.round(currentDelay / decreaseFactor)
         successes = 0
       }
       logger.debug(`Running ${fn.name} succeeded. Success: ${successes}; fail: ${fails}; currentDelay: ${currentDelay}`)
