@@ -32,6 +32,8 @@ class DataManager extends EventEmitter {
   #tickTimeout
   #options = {}
   #active = false
+  #refreshCycles = 0
+  #cycleLoggerTimeout
 
   /**
    * @returns {DataManager~Options} A copy of the current options.
@@ -111,6 +113,19 @@ class DataManager extends EventEmitter {
 
     this.#active = true
     this.#run()
+
+    const cycleLoggerData = {
+      prevCount: 0,
+      prevTime: Date.now()
+    }
+
+    this.#cycleLoggerTimeout = setInterval(() => {
+      const now = Date.now()
+      const timeDiff = now - cycleLoggerData.prevTime
+      logger.debug(`Completed ${this.#refreshCycles - cycleLoggerData.prevCount} refresh cycles in the last ${timeDiff} ms`)
+      cycleLoggerData.prevCount = this.#refreshCycles
+      cycleLoggerData.prevTime = now
+    }, 60000)
   }
 
   /**
@@ -119,6 +134,7 @@ class DataManager extends EventEmitter {
   stop() {
     logger.debug(`Data manager stopping`)
     clearTimeout(this.#tickTimeout)
+    clearInterval(this.#cycleLoggerTimeout)
     this.#storage.drop()
   }
 
@@ -231,7 +247,8 @@ class DataManager extends EventEmitter {
     await this.refresh()
     const end = Date.now()
     logger.silly(`Refresh cycle took ${end - start} ms`)
-    setTimeout(() => {
+    this.#refreshCycles += 1
+    this.#tickTimeout = setTimeout(() => {
       this.#run()
     }, this.#options.pollInterval)
   }
