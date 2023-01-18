@@ -5,8 +5,6 @@
     <DroneMap :drones="drones"
               :selected-drone-serial="selectedDroneSerial" />
 
-
-
     <DataTable :drones="drones"
                :selected-drone-serial="selectedDroneSerial"
                @drone-selected="setSelectedDroneSerial" />
@@ -15,7 +13,7 @@
 </template>
 
 <script setup>
-import { inject, computed, reactive, ref } from 'vue'
+import { inject, reactive, ref } from 'vue'
 import stc from 'string-to-color'
 
 import DataTable from './DataTable.vue'
@@ -25,19 +23,14 @@ const props = defineProps(['drones'])
 const drones = reactive(props.drones)
 const selectedDroneSerial = ref('')
 
-
 const setSelectedDroneSerial = (serialNumber) => {
   selectedDroneSerial.value = serialNumber
 }
-
-// Helpers and sorting functions
 
 const createDronePath = (positions) => Object.keys(positions)
   .sort()
   .map(timestamp => positions[timestamp])
   .reduce((str, pos) => `${str} ${pos[0]},${pos[1]}`, '')
-
-
 
 if (drones) {
   for (const drone of Object.values(drones)) {
@@ -50,13 +43,11 @@ if (drones) {
   }
 }
 
-
-
-
 if (!import.meta.env.SSR) {
 
   const socket = inject('socket')
   socket.on('data', (serialNumber, data) => {
+
     if (!data) {
       console.log(`Deleting ${serialNumber}`)
       if (selectedDroneSerial === serialNumber) selectedDroneSerial.value = ''
