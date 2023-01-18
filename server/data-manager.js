@@ -79,16 +79,6 @@ class DataManager extends EventEmitter {
     const drone = this.#storage.get(serialNumber)
     if (drone) {
       const data = omit(drone, 'positions')
-      /*
-      const data = {
-          serialNumber,
-          closestDistance: drone.closestDistance,
-          pilot: drone.pilot,
-          positionX: drone.positionX,
-          positionY: drone.positionY,
-          lastSeen: drone.lastSeen
-      }
-      */
       if (timestamp) {
         data.positions = { [timestamp.getTime()]: drone.positions[timestamp.getTime()] }
       }
