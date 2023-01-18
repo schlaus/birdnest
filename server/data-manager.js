@@ -5,7 +5,7 @@ const Storage = require('./storage')
 
 const getDroneData = require('./drones-api')
 const getPilotData = require('./pilots-api')
-const { createDroneDataset, omit } = require('./utils')
+const { createDroneDataset, omit, pick } = require('./utils')
 
 
 /**
@@ -140,6 +140,23 @@ class DataManager extends EventEmitter {
   }
 
   /**
+   * Trims position data so that only the last { env.MAX_POSITIONS }
+   * positions are kept.
+   */
+  trimPositionData() {
+    const maxPositions = parseInt(process.env.MAX_POSITIONS)
+    this.#storage.forEach((serialNumber, drone) => {
+      const { positions } = drone
+      const positionKeys = Object.keys(positions)
+      if (positionKeys.length >= maxPositions) {
+        positionKeys.sort().reverse()
+        positionKeys.length = maxPositions
+        this.#storage.update(serialNumber, 'positions', pick(positions, ...positionKeys))
+      }
+    })
+  }
+
+  /**
    * Updates pilot information for drones whose pilots have not been 
    * identified yet. Known data is never updated as pilot information never 
    * changes per spec.
@@ -210,7 +227,7 @@ class DataManager extends EventEmitter {
    */
   async #run() {
     logger.silly('Data manager run started')
-    this.refresh()
+    await this.refresh()
     setTimeout(() => {
       this.#run()
     }, this.#options.pollInterval)
@@ -225,6 +242,7 @@ class DataManager extends EventEmitter {
   async refresh() {
     this.purgeExpiredViolations()
     await this.updateDroneData()
+    this.trimPositionData()
     await this.updatePilotData()
   }
 }
