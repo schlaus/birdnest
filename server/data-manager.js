@@ -75,7 +75,7 @@ class DataManager extends EventEmitter {
      * @param {string} serialNumber
      * @param {import('./utils').DroneDataset} [data] - A null value indicates the data has expired.
      */
-    logger.debug(`Broadcasting update for drone ${serialNumber}, timestamp: ${timestamp}`)
+    logger.silly(`Broadcasting update for drone ${serialNumber}, timestamp: ${timestamp}`)
     const drone = this.#storage.get(serialNumber)
     if (drone) {
       const data = omit(drone, 'positions')
@@ -122,7 +122,7 @@ class DataManager extends EventEmitter {
     this.#cycleLoggerTimeout = setInterval(() => {
       const now = Date.now()
       const timeDiff = now - cycleLoggerData.prevTime
-      logger.debug(`Completed ${this.#refreshCycles - cycleLoggerData.prevCount} refresh cycles in the last ${timeDiff} ms`)
+      logger.debug(`Completed ${this.#refreshCycles - cycleLoggerData.prevCount} refresh cycles in the last ${timeDiff} ms. Storage has ${this.#storage.getCount()} entries.`)
       cycleLoggerData.prevCount = this.#refreshCycles
       cycleLoggerData.prevTime = now
     }, 60000)
@@ -147,7 +147,7 @@ class DataManager extends EventEmitter {
     const isExpired = (_, drone) => now - drone.lastSeen >= tenMinutesInMs
 
     const expired = Object.keys(this.#storage.find(isExpired))
-    logger.debug(`Found ${expired.length} expired violations`)
+    logger.silly(`Found ${expired.length} expired violations`)
 
     for (const serialNumber of expired) {
       this.#storage.delete(serialNumber)
@@ -165,6 +165,7 @@ class DataManager extends EventEmitter {
       const { positions } = drone
       const positionKeys = Object.keys(positions).map(key => parseInt(key))
       if (positionKeys.length >= maxPositions) {
+        logger.debug(`Trimmed position data for drone ${serialNumber}, was: ${positionKeys.length}. Last seen: ${drone.lastSeen}`)
         positionKeys.sort().reverse()
         positionKeys.length = maxPositions
         this.#storage.update(serialNumber, 'positions', pick(positions, ...positionKeys))
