@@ -147,7 +147,7 @@ class DataManager extends EventEmitter {
     const maxPositions = parseInt(process.env.MAX_POSITIONS)
     this.#storage.forEach((serialNumber, drone) => {
       const { positions } = drone
-      const positionKeys = Object.keys(positions)
+      const positionKeys = Object.keys(positions).map(key => parseInt(key))
       if (positionKeys.length >= maxPositions) {
         positionKeys.sort().reverse()
         positionKeys.length = maxPositions
