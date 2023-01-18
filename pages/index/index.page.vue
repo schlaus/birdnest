@@ -286,14 +286,9 @@ import stc from 'string-to-color'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 
-let timeAgo
+TimeAgo.addLocale(en)
 
-if (!import.meta.env.SSR) {
-  // Default locale is only set client-side to avoid an error for
-  // setting it twice.
-  TimeAgo.addDefaultLocale(en)
-  timeAgo = new TimeAgo('en-US')
-}
+const timeAgo = new TimeAgo('en-US')
 
 const props = defineProps(['drones'])
 const drones = reactive(props.drones)
@@ -387,9 +382,8 @@ const printableDrones = computed(() => {
     })
 })
 
-onMounted(() => {
-  updateLastSeenText()
-})
+updateLastSeenText()
+
 
 if (!import.meta.env.SSR) {
   setInterval(() => {
