@@ -8,39 +8,45 @@ const logger = require('./logger')
  */
 class Storage {
 
+  #data
+
   constructor() {
     this.#init()
   }
 
   #init() {
-    this._data = {}
+    this.#data = {}
     logger.debug('Storage initialized')
   }
 
   insert(id, data) {
-    this._data[id] = structuredClone(data)
+    this.#data[id] = structuredClone(data)
     logger.silly(`Inserted data with id ${id}`, data)
   }
 
   delete(id) {
-    delete this._data[id]
+    delete this.#data[id]
     logger.silly(`Deleted data with id ${id}`)
   }
 
   has(id) {
-    return !!this._data[id]
+    return !!this.#data[id]
   }
 
   get(id) {
-    return structuredClone(this._data[id])
+    return structuredClone(this.#data[id])
   }
 
   getAll() {
-    return structuredClone(this._data) || {}
+    return structuredClone(this.#data) || {}
+  }
+
+  getCount() {
+    return Object.keys(this.#data).length
   }
 
   set(id, key, value) {
-    this._data[id][key] = value
+    this.#data[id][key] = value
     logger.silly(`Updated key ${key} for id ${id}`, value)
   }
 
@@ -67,10 +73,10 @@ class Storage {
   update(id, keyOrObject, value) {
     if (typeof keyOrObject === "object") {
       logger.silly(`Merging id ${id} with new data`, keyOrObject)
-      this._data[id] = merge(this._data[id], keyOrObject)
+      this.#data[id] = merge(this.#data[id], keyOrObject)
     } else {
       logger.silly(`Setting key ${keyOrObject} for id ${id}`, value)
-      this._data[id][keyOrObject] = value
+      this.#data[id][keyOrObject] = value
     }
   }
 
@@ -85,13 +91,13 @@ class Storage {
   }
 
   forEach(func) {
-    for (const [id, data] of Object.entries(this._data)) {
+    for (const [id, data] of Object.entries(this.#data)) {
       func(id, structuredClone(data))
     }
   }
 
   where(predicate, func) {
-    for (const [id, data] of Object.entries(this._data)) {
+    for (const [id, data] of Object.entries(this.#data)) {
       if (predicate(id, structuredClone(data))) {
         func(id, structuredClone(data))
       }
