@@ -7,39 +7,58 @@
       <svg viewBox="0 0 500000 500000" xmlns="http://www.w3.org/2000/svg" class="w-full">
 
         <!-- Vertical grid lines -->
-        <line :x1="index * 50000" y1="0" :x2="index * 50000" y2="500000" stroke="black" v-for="index in 9" :key="index"
-          stroke-width="80" />
+        <line :x1="index * 50000" y1="0"
+              :x2="index * 50000" y2="500000"
+              stroke="black" stroke-width="80"
+              v-for="index in 9" :key="index" />
 
         <!-- Horizontal grid lines -->
-        <line :y1="index * 50000" x1="0" :y2="index * 50000" x2="500000" stroke="black" v-for="index in 9" :key="index"
-          stroke-width="80" />
+        <line v-for="index in 9" :key="index"
+              x1="0" :y1="index * 50000"
+              :y2="index * 50000" x2="500000"
+              stroke="black" stroke-width="80" />
 
         <!-- NDZ perimeter -->
-        <circle cx="250000" cy="250000" r="100000" stroke="black" stroke-width="500" fill="none" />
-        <polyline points="320711,320711 330711,335711 400000,335711" stroke="gray" stroke-width="500" fill="none" />
-        <text x="332211" y="334711">NDZ perimeter</text>
+        <circle cx="250000" cy="250000" r="100000"
+                stroke="black" stroke-width="500" fill="none" />
+        <polyline points="320711,320711 330711,335711 400000,335711"
+                  stroke="gray" stroke-width="500" fill="none" />
+        <text x="332211" y="334711">
+          NDZ perimeter
+        </text>
 
         <!-- Nest -->
-        <circle cx="250000" cy="250000" r="2000" stroke="black" stroke-width="500" fill="black" />
-        <polyline points="250000,250000 260000,265000 285000,265000" stroke="gray" stroke-width="500" fill="none" />
-        <text x="261500" y="264000">Nest</text>
+        <circle cx="250000" cy="250000" r="2000"
+                stroke="black" stroke-width="500" fill="black" />
+        <polyline points="250000,250000 260000,265000 285000,265000"
+                  stroke="gray" stroke-width="500" fill="none" />
+        <text x="261500" y="264000">
+          Nest
+        </text>
 
         <!-- Drones (current position) -->
-        <circle v-for="drone in drones" :cx="drone.positionX" :cy="drone.positionY"
-          :r="selectedDroneSerial === drone.serialNumber ? 3500 : 2000" :stroke="drone.color" :fill="drone.color"
-          :class="{ 'opacity-20': selectedDroneSerial && selectedDroneSerial !== drone.serialNumber }"
-          class="transition-opacity" stroke-width="40" />
+        <circle v-for="drone in drones"
+                :cx="drone.positionX" :cy="drone.positionY"
+                :r="selectedDroneSerial === drone.serialNumber ? 3500 : 2000"
+                :stroke="drone.color" :fill="drone.color"
+                :class="{
+                  'opacity-20': selectedDroneSerial && selectedDroneSerial !== drone.serialNumber
+                }"
+                class="transition-opacity" stroke-width="40" />
 
         <!-- Drones (past positions) -->
         <circle v-if="selectedDroneSerial && drones[selectedDroneSerial]"
-          v-for="(pos, timestamp) in drones[selectedDroneSerial].positions" :cx="pos[0]" :cy="pos[1]" r="2000"
-          :stroke="drones[selectedDroneSerial].color" :fill="drones[selectedDroneSerial].color" />
+                v-for="(pos, timestamp) in drones[selectedDroneSerial].positions"
+                :cx="pos[0]" :cy="pos[1]" r="2000"
+                :stroke="drones[selectedDroneSerial].color"
+                :fill="drones[selectedDroneSerial].color" />
 
         <!-- Drone flight paths -->
-        <polyline v-if="selectedDroneSerial && drones[selectedDroneSerial]" :points="drones[selectedDroneSerial].path"
-          :stroke="drones[selectedDroneSerial].color" fill="none" class="transition-opacity" stroke-width="500"
-          stroke-dasharray="1500" />
-
+        <polyline v-if="selectedDroneSerial && drones[selectedDroneSerial]"
+                  :points="drones[selectedDroneSerial].path"
+                  :stroke="drones[selectedDroneSerial].color"
+                  fill="none" class="transition-opacity"
+                  stroke-width="500" stroke-dasharray="1500" />
       </svg>
 
       <div class="px-3 py-2 flex flex-row">
@@ -60,8 +79,9 @@
       <!-- Header row -->
       <div class="table-header-group select-none">
         <div class="table-row h-4">
-          <div class="table-cell border-b-2 border-slate-600 border-r" title="Minimum observed distance to nest"
-            @click="updateSorting('dist')">
+          <div class="table-cell border-b-2 border-slate-600 border-r"
+               title="Minimum observed distance to nest"
+               @click="updateSorting('dist')">
             Min. dist.
             <template v-if="sorting.key === 'dist'">
               <span class="material-symbols-outlined" v-if="sorting.dir === 'desc'">expand_more</span>
@@ -75,7 +95,8 @@
           </div>
 
           <!-- Pilot headers for >= medium screens -->
-          <div class="hidden md:table-cell border-b-2 border-slate-600 cursor-pointer" @click="updateSorting('pilot')">
+          <div class="hidden md:table-cell border-b-2 border-slate-600 cursor-pointer"
+               @click="updateSorting('pilot')">
             Pilot name
             <template v-if="sorting.key === 'pilot'">
               <span class="material-symbols-outlined" v-if="sorting.dir === 'desc'">expand_more</span>
@@ -108,9 +129,11 @@
       </div>
 
       <!-- Data rows -->
-      <div class="table-row h-8" v-for="drone in printableDrones" @mouseover="mapMouseOver(drone.serialNumber)"
-        @mouseleave="mapMouseLeave(drone.serialNumber)"
-        :class="{ 'bg-amber-100': drone.serialNumber === selectedDroneSerial }">
+      <div v-for="drone in printableDrones"
+           @mouseover="mapMouseOver(drone.serialNumber)"
+           @mouseleave="mapMouseLeave(drone.serialNumber)"
+           class="table-row h-8"
+           :class="{ 'bg-amber-100': drone.serialNumber === selectedDroneSerial }">
 
         <!-- Closest distance column -->
         <div class="table-cell border-b border-slate-600 border-r">
@@ -140,18 +163,15 @@
 
               <!-- "Show drone details"-button for small screens -->
               <div class="text-right">
-                <button class="inline-block" @click.stop="toggleDetails(drone.serialNumber)">
+                <button @click.stop="toggleDetails(drone.serialNumber)"
+                        class="inline-block">
                   <template v-if="!drone.detailsShown">
                     Show drone details
-                    <span class="material-symbols-outlined">
-                      expand_circle_down
-                    </span>
+                    <span class="material-symbols-outlined">expand_circle_down</span>
                   </template>
                   <template v-else>
                     Hide drown details
-                    <span class="material-symbols-outlined rotate-180">
-                      expand_circle_down
-                    </span>
+                    <span class="material-symbols-outlined rotate-180">expand_circle_down</span>
                   </template>
                 </button>
               </div>
@@ -187,7 +207,8 @@
             {{ drone.pilot.name }}
 
             <!-- Drone details datalist for >= medium screens -->
-            <dl :class="{ hidden: !drone.detailsShown }" class="overflow-x-visible w-2 whitespace-nowrap ml-4 mt-2">
+            <dl :class="{ hidden: !drone.detailsShown }"
+                class="overflow-x-visible w-2 whitespace-nowrap ml-4 mt-2">
               <dt class="font-bold leading-4">Serial number</dt>
               <dd>{{ drone.serialNumber }}</dd>
               <dt class="font-bold leading-4">Model</dt>
