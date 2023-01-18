@@ -191,14 +191,14 @@ class DataManager extends EventEmitter {
    * Updates drone data from the drone API.
    */
   async updateDroneData() {
-    logger.debug(`Getting new drone report`)
+    logger.silly(`Getting new drone report`)
     const report = await getDroneData()
     if (!report) {
       logger.debug('Received empty drone report')
       return
     }
     const { drones, timestamp } = report
-    logger.debug(`Report contains ${drones.length} drones`)
+    logger.silly(`Report contains ${drones.length} drones`)
     logger.silly('Full report:', drones)
 
     for (const drone of drones) {
@@ -207,7 +207,7 @@ class DataManager extends EventEmitter {
       const droneInNDZ = newData.closestDistance <= 100000
       const keepData = oldData || droneInNDZ
 
-      logger.debug(`Drone ${drone.serialNumber}`, { exists: !!oldData, droneInNDZ, keepData })
+      logger.silly(`Drone ${drone.serialNumber}`, { exists: !!oldData, droneInNDZ, keepData })
 
       if (!keepData) continue
 
@@ -227,7 +227,10 @@ class DataManager extends EventEmitter {
    */
   async #run() {
     logger.silly('Data manager run started')
+    const start = Date.now()
     await this.refresh()
+    const end = Date.now()
+    logger.silly(`Refresh cycle took ${end - start} ms`)
     setTimeout(() => {
       this.#run()
     }, this.#options.pollInterval)

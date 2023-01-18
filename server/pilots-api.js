@@ -17,7 +17,11 @@ async function getPilotData(drone) {
     return response.data
   } catch (e) {
     if (e.response) {
-      logger.debug(e.response)
+      if (e.response.status !== 404) {
+        logger.error(`Unexpected error while querying pilot info`)
+        logger.error(e.response)
+      }
+      logger.silly(e.response)
       return null
     } else if (e.request) {
       logger.info(`No response from pilot api`)

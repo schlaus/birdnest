@@ -19,12 +19,12 @@ class Storage {
 
   insert(id, data) {
     this._data[id] = structuredClone(data)
-    logger.debug(`Inserted data with id ${id}`, data)
+    logger.silly(`Inserted data with id ${id}`, data)
   }
 
   delete(id) {
     delete this._data[id]
-    logger.debug(`Deleted data with id ${id}`)
+    logger.silly(`Deleted data with id ${id}`)
   }
 
   has(id) {
@@ -41,7 +41,7 @@ class Storage {
 
   set(id, key, value) {
     this._data[id][key] = value
-    logger.debug(`Updated key ${key} for id ${id}`, value)
+    logger.silly(`Updated key ${key} for id ${id}`, value)
   }
 
   /**
@@ -66,20 +66,20 @@ class Storage {
 
   update(id, keyOrObject, value) {
     if (typeof keyOrObject === "object") {
-      logger.debug(`Merging id ${id} with new data`, keyOrObject)
+      logger.silly(`Merging id ${id} with new data`, keyOrObject)
       this._data[id] = merge(this._data[id], keyOrObject)
     } else {
-      logger.debug(`Setting key ${keyOrObject} for id ${id}`, value)
+      logger.silly(`Setting key ${keyOrObject} for id ${id}`, value)
       this._data[id][keyOrObject] = value
     }
   }
 
   upsert(id, data) {
     if (!this.has(id)) {
-      logger.debug(`Upserting id ${id}, using insert`)
+      logger.silly(`Upserting id ${id}, using insert`)
       this.insert(id, data)
     } else {
-      logger.debug(`Upserting id ${id}, using update`)
+      logger.silly(`Upserting id ${id}, using update`)
       this.update(id, data)
     }
   }

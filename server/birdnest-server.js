@@ -62,7 +62,7 @@ class BirdnestServer {
     // Routing is delegated to vite-plugin-ssr.
     this.app.get('*', async (req, res, next) => {
 
-      logger.debug(`Request: ${req.originalUrl}`)
+      logger.silly(`Request: ${req.originalUrl}`)
 
       const pageContextInit = {
         urlOriginal: req.originalUrl,
@@ -83,11 +83,9 @@ class BirdnestServer {
     })
     logger.silly('Routes defined')
 
-    if (!isProduction) {
-      this.io.on('connection', () => {
-        logger.debug('New WebSocket connection')
-      })
-    }
+    this.io.on('connection', () => {
+      logger.silly('New WebSocket connection')
+    })
 
     const port = parseInt(process.env.PORT) || 3000
     this.server.listen(port, () => {

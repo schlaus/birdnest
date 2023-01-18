@@ -18,9 +18,9 @@ const getData = withExpBackoff(function getDronesReport() {
  */
 async function getDroneData() {
   try {
-    logger.debug('Attempting to get drone data')
+    logger.silly('Attempting to get drone data')
     const response = await getData()
-    logger.debug(`Response status: ${response.status}`)
+    logger.silly(`Response status: ${response.status}`)
 
     const { data } = response
     const options = {
@@ -35,12 +35,10 @@ async function getDroneData() {
     return { drones: parsedData.report.capture.drone, timestamp }
   } catch (e) {
     if (e.response) {
-      /*
       if (e.response.status !== 429) {
-        logger.error(`Drone api responded with an unexpected status: ${e.response.status}`, e.response)
-        throw e
+        logger.error(`Drone api responded with an unexpected status: ${e.response.status}`)
+        logger.error(e.response)
       }
-      */
       return null
     } else if (e.request) {
       logger.info(`No response from drone api`)

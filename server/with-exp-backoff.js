@@ -48,13 +48,13 @@ exports.withExpBackoff = function withExpBackoff(fn, {
   let currentDelay = 0
 
   const run = async (...args) => {
-    logger.debug(`Running fn ${fn.name} with exponential backoff with ${currentDelay} ms delay. Success: ${successes}; fail: ${fails}`)
+    logger.silly(`Running fn ${fn.name} with exponential backoff with ${currentDelay} ms delay. Success: ${successes}; fail: ${fails}`)
     if (currentDelay) {
       await sleep(currentDelay)
     }
 
     try {
-      logger.debug('Running backed off fn')
+      logger.silly('Running backed off fn')
       const resp = await fn(...args)
       fails = 0
       successes += 1
@@ -62,7 +62,7 @@ exports.withExpBackoff = function withExpBackoff(fn, {
         currentDelay = Math.round(currentDelay / decreaseFactor)
         successes = 0
       }
-      logger.debug(`Running ${fn.name} succeeded. Success: ${successes}; fail: ${fails}; currentDelay: ${currentDelay}`)
+      logger.silly(`Running ${fn.name} succeeded. Success: ${successes}; fail: ${fails}; currentDelay: ${currentDelay}`)
       return resp
     } catch (e) {
       successes = 0
@@ -75,8 +75,8 @@ exports.withExpBackoff = function withExpBackoff(fn, {
       if (maxDelay) {
         currentDelay = Math.min(maxDelay, currentDelay)
       }
-      logger.debug(`Running ${fn.name} failed. Success: ${successes}; fail: ${fails}; currentDelay: ${currentDelay}`)
-      logger.debug(e)
+      logger.silly(`Running ${fn.name} failed. Success: ${successes}; fail: ${fails}; currentDelay: ${currentDelay}`)
+      logger.silly(e)
       throw e
     }
   }
