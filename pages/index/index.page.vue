@@ -45,6 +45,19 @@ if (drones) {
 
 if (!import.meta.env.SSR) {
 
+  setInterval(() => {
+    // Clear expired violations from the UI even if we missed delete
+    // call from the server.
+    const now = new Date()
+    if (drones) {
+      for (const [serialNumber, drone] of Object.entries(drones)) {
+        if (now - new Date(drone.lastSeen) >= 600000) {
+          delete drones[serialNumber]
+        }
+      }
+    }
+  }, 10000)
+
   const socket = inject('socket')
   socket.on('data', (serialNumber, data) => {
 
