@@ -146,20 +146,32 @@ class DataManager extends EventEmitter {
   }
 
   /**
-   * Trims position data so that only the last { env.MAX_POSITIONS }
-   * positions are kept.
+   * Trims a position tuple collection to env.MAX_POSITIONS last entries.
+   * @param {positionTupleCollection} positions 
+   * @returns 
+   */
+  #trimPositionObject(positions) {
+    const maxPositions = parseInt(process.env.MAX_POSITIONS)
+    const positionKeys = Object.keys(positions).map(key => parseInt(key))
+    if (positionKeys.length >= maxPositions) {
+      positionKeys.sort().reverse()
+      positionKeys.length = maxPositions
+      return pick(positions, ...positionKeys)
+    }
+    return positions
+  }
+
+  /**
+   * Trims position data for all applicable drones so that only the last 
+   * env.MAX_POSITIONS positions are kept.
    */
   trimPositionData() {
     const maxPositions = parseInt(process.env.MAX_POSITIONS)
-    this.#storage.forEach((serialNumber, drone) => {
-      const { positions } = drone
-      const positionKeys = Object.keys(positions).map(key => parseInt(key))
-      if (positionKeys.length >= maxPositions) {
-        logger.debug(`Trimmed position data for drone ${serialNumber}, was: ${positionKeys.length}. Last seen: ${drone.lastSeen}`)
-        positionKeys.sort().reverse()
-        positionKeys.length = maxPositions
-        this.#storage.update(serialNumber, 'positions', pick(positions, ...positionKeys))
-      }
+    const tooManyPositions = (_, drone) => Object.keys(drone.positions).length > maxPositions
+
+    this.#storage.where(tooManyPositions, (serialNumber, drone) => {
+      logger.silly(`Found drone ${serialNumber} with too many positions: ${Object.keys(drone.positions).length}. Last seen: ${drone.lastSeen}`)
+      this.#storage.update(serialNumber, 'positions', this.#trimPositionObject(drone.positions))
     })
   }
 
@@ -172,24 +184,24 @@ class DataManager extends EventEmitter {
 
     const noPilotInfo = (_, drone) => !drone.pilot
 
-    logger.debug(`Updating missing pilot data`)
+    logger.silly(`Updating missing pilot data`)
     this.#storage.where(noPilotInfo, async (serialNumber, drone) => {
-      logger.debug(`Fetching pilot information for drone ${serialNumber}, current info:`, drone.pilot)
+      logger.silly(`Fetching pilot information for drone ${serialNumber}`, { pilotData: drone.pilot })
       const pilot = await getPilotData(drone)
       if (pilot) {
-        logger.debug(`Fetched pilot information for drone ${serialNumber}`, pilot)
+        logger.silly(`Fetched pilot information for drone ${serialNumber}`, pilot)
 
         // Check for the existence first because there's a chance
         // the violation expired before pilot query succeeded.
         if (this.#storage.has(serialNumber)) {
-          logger.debug(`Saving pilot information for drone ${serialNumber}`)
+          logger.silly(`Saving pilot information for drone ${serialNumber}`)
           this.#storage.set(serialNumber, "pilot", pilot)
           this.#broadcastUpdate(serialNumber)
         } else {
           logger.debug(`Did not save pilot information for drone ${serialNumber} as drone was not found in storage`)
         }
       } else {
-        logger.debug(`Fetching pilot information for drone ${serialNumber} failed`)
+        logger.silly(`Fetching pilot information for drone ${serialNumber} failed`)
       }
     })
   }
@@ -206,7 +218,7 @@ class DataManager extends EventEmitter {
     }
     const { drones, timestamp } = report
     logger.silly(`Report contains ${drones.length} drones`)
-    logger.silly('Full report:', drones)
+    logger.silly('Full report', { drones })
 
     for (const drone of drones) {
       const newData = createDroneDataset(drone, timestamp)

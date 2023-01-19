@@ -11,7 +11,7 @@ const getData = withExpBackoff(function getPilotData(drone) {
 
 async function getPilotData(drone) {
   try {
-    logger.debug(`Attempting to get pilot info for drone ${drone.serialNumber}`)
+    logger.silly(`Attempting to get pilot info for drone ${drone.serialNumber}`)
     const response = await getData(drone)
     logger.silly(`Pilot data:`, response.data)
     return response.data
