@@ -4,7 +4,7 @@ const logger = require('./logger')
 const { withExpBackoff } = require('./with-exp-backoff')
 
 const getData = withExpBackoff(function getPilotData(drone) {
-  return axios.get(`${process.env.PILOT_API_URL}/${drone.serialNumber}`, { timeout: parseInt(process.env.API_REQUEST_TIMEOUT) })
+  return axios.get(`${process.env.PILOT_API_URL}/${drone.serialNumber}`, { timeout: parseInt(process.env.API_REQUEST_TIMEOUT_MS) })
 }, {
   maxDelay: process.env.MAX_BACKOFF_DELAY_MS
 })
