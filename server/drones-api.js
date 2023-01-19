@@ -50,7 +50,6 @@ async function getDroneData() {
       return null
     } else if (e.request) {
       logger.info(`No response from drone api`)
-      logger.debug(e)
       return null
     } else {
       logger.error(`Encountered error while setting up request to drone api: ${e.message}`)
