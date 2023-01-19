@@ -267,8 +267,8 @@ class DataManager extends EventEmitter {
     logger.silly(`Data manager run started at ${this.#runStartedTimestamp}`)
 
     if (this.#cycleMonitorData.emptyReports > 5) {
-      logger.warn(`Previous ${this.#cycleMonitorData.emptyReports} drone requests failed. Sleeping 5000 ms before next request.`)
-      await sleep(5000, true)
+      logger.error(`Drone API has stopped responding (previous ${this.#cycleMonitorData.emptyReports} requests failed). Cannot recover.`)
+      throw new Error('Drone API has stopped responding.')
     }
 
     await this.refresh()
