@@ -33,7 +33,10 @@ class DataManager extends EventEmitter {
   #options = {}
   #active = false
   #refreshCycles = 0
-  #cycleLoggerTimeout
+  #runSequence = 0
+  #cycleMonitorTimeout
+  #cycleMonitorData = {}
+  #runStartedTimestamp
 
   /**
    * @returns {DataManager~Options} A copy of the current options.
@@ -102,20 +105,30 @@ class DataManager extends EventEmitter {
     this.#storage = new Storage()
 
     this.#active = true
-    this.#run()
+    this.#run(this.#runSequence)
 
-    const cycleLoggerData = {
+    this.#cycleMonitorData = {
       prevCount: 0,
-      prevTime: Date.now()
+      prevTime: Date.now(),
+      prevRunStart: this.#runStartedTimestamp
     }
+    const monitorInterval = parseInt(process.env.CYCLE_MONITOR_INTERVAL)
 
-    this.#cycleLoggerTimeout = setInterval(() => {
+    this.#cycleMonitorTimeout = setInterval(() => {
       const now = Date.now()
-      const timeDiff = now - cycleLoggerData.prevTime
-      logger.debug(`Completed ${this.#refreshCycles - cycleLoggerData.prevCount} refresh cycles in the last ${timeDiff} ms. Storage has ${this.#storage.getCount()} entries.`)
-      cycleLoggerData.prevCount = this.#refreshCycles
-      cycleLoggerData.prevTime = now
-    }, 60000)
+      const timeDiff = now - this.#cycleMonitorData.prevTime
+      const countDiff = this.#refreshCycles - this.#cycleMonitorData.prevCount
+      if (countDiff === 0) {
+        logger.error(`No completed cycles in the last ${timeDiff} ms. Storage has ${this.#storage.getCount()} entries.`)
+        this.#runSequence++
+        this.#run(this.#runSequence)
+        logger.debug(`Started new run sequence with id ${this.#runSequence}`)
+      } else {
+        logger.debug(`Completed ${countDiff} refresh cycles in the last ${timeDiff} ms, latest run timestamp: ${this.#cycleMonitorData.prevRunStart}. Storage has ${this.#storage.getCount()} entries.`)
+      }
+      this.#cycleMonitorData.prevCount = this.#refreshCycles
+      this.#cycleMonitorData.prevTime = now
+    }, monitorInterval)
   }
 
   /**
@@ -124,7 +137,7 @@ class DataManager extends EventEmitter {
   stop() {
     logger.debug(`Data manager stopping`)
     clearTimeout(this.#tickTimeout)
-    clearInterval(this.#cycleLoggerTimeout)
+    clearInterval(this.#cycleMonitorTimeout)
     this.#storage.drop()
   }
 
@@ -242,18 +255,23 @@ class DataManager extends EventEmitter {
   }
 
   /**
-   * Triggers a refresh cycle and schedules the next run.
+   * Triggers a refresh cycle and schedules the next run, unless a new run
+   * sequence has been initiated.
+   * @param {number} sequenceId - A run sequence id
    */
-  async #run() {
-    logger.silly('Data manager run started')
-    const start = Date.now()
+  async #run(sequenceId) {
+    this.#runStartedTimestamp = Date.now()
+    logger.silly(`Data manager run started at ${this.#runStartedTimestamp}`)
     await this.refresh()
-    const end = Date.now()
-    logger.silly(`Refresh cycle took ${end - start} ms`)
+    logger.silly(`Refresh cycle took ${Date.now() - this.#runStartedTimestamp} ms`)
     this.#refreshCycles += 1
-    this.#tickTimeout = setTimeout(() => {
-      this.#run()
-    }, this.#options.pollInterval)
+    if (this.#runSequence === sequenceId) {
+      this.#tickTimeout = setTimeout(() => {
+        this.#run(sequenceId)
+      }, this.#options.pollInterval)
+    } else {
+      logger.debug(`Run sequence ${sequenceId} terminating (current sequence: ${this.#runSequence})`)
+    }
   }
 
   /**
@@ -264,9 +282,21 @@ class DataManager extends EventEmitter {
    */
   async refresh() {
     this.purgeExpiredViolations()
+
+    const droneDataTimeout = setTimeout(() => {
+      logger.debug(`updateDroneData seems to have stalled`)
+    }, 10000)
+
     await this.updateDroneData()
+    clearTimeout(droneDataTimeout)
+
     this.trimPositionData()
+
+    const pilotDataTimeout = setTimeout(() => {
+      logger.debug(`updatePilotData seems to have stalled`)
+    }, 10000)
     await this.updatePilotData()
+    clearTimeout(pilotDataTimeout)
   }
 }
 
