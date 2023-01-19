@@ -5,7 +5,7 @@ const Storage = require('./storage')
 
 const getDroneData = require('./drones-api')
 const getPilotData = require('./pilots-api')
-const { createDroneDataset, omit, pick } = require('./utils')
+const { createDroneDataset, omit, pick, sleep } = require('./utils')
 
 
 /**
@@ -110,7 +110,8 @@ class DataManager extends EventEmitter {
     this.#cycleMonitorData = {
       prevCount: 0,
       prevTime: Date.now(),
-      prevRunStart: this.#runStartedTimestamp
+      prevRunStart: this.#runStartedTimestamp,
+      emptyReports: 0
     }
     const monitorInterval = parseInt(process.env.CYCLE_MONITOR_INTERVAL_MS)
 
@@ -227,8 +228,10 @@ class DataManager extends EventEmitter {
     const report = await getDroneData()
     if (!report) {
       logger.debug('Received empty drone report')
+      this.#cycleMonitorData.emptyReports++
       return
     }
+    this.#cycleMonitorData.emptyReports = 0
     const { drones, timestamp } = report
     logger.silly(`Report contains ${drones.length} drones`)
     logger.silly('Full report', { drones })
@@ -262,6 +265,12 @@ class DataManager extends EventEmitter {
   async #run(sequenceId) {
     this.#runStartedTimestamp = Date.now()
     logger.silly(`Data manager run started at ${this.#runStartedTimestamp}`)
+
+    if (this.#cycleMonitorData.emptyReports % 5 === 0) {
+      logger.warn(`Previous ${this.#cycleMonitorData.emptyReports} drone requests failed. Sleeping 5000 ms before next request.`)
+      await sleep(5000, true)
+    }
+
     await this.refresh()
     logger.silly(`Refresh cycle took ${Date.now() - this.#runStartedTimestamp} ms`)
     this.#refreshCycles += 1
