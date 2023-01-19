@@ -38,6 +38,8 @@ async function getDroneData() {
       if (e.response.status !== 429) {
         logger.error(`Drone api responded with an unexpected status: ${e.response.status}`)
         logger.error(e.response)
+      } else {
+        logger.debug(`Drone api responded with status 429`)
       }
       return null
     } else if (e.request) {
