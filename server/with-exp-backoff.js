@@ -58,7 +58,7 @@ exports.withExpBackoff = function withExpBackoff(fn, {
       const resp = await fn(...args)
       fails = 0
       successes += 1
-      if (decreaseThreshold && successes >= decreaseThreshold && currentDelay > initialDelay) {
+      if (decreaseThreshold && successes >= decreaseThreshold && currentDelay) {
         currentDelay = Math.round(currentDelay / decreaseFactor)
         successes = 0
       }
