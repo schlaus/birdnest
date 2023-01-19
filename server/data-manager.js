@@ -112,7 +112,7 @@ class DataManager extends EventEmitter {
       prevTime: Date.now(),
       prevRunStart: this.#runStartedTimestamp
     }
-    const monitorInterval = parseInt(process.env.CYCLE_MONITOR_INTERVAL)
+    const monitorInterval = parseInt(process.env.CYCLE_MONITOR_INTERVAL_MS)
 
     this.#cycleMonitorTimeout = setInterval(() => {
       const now = Date.now()
